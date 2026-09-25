@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand Section */}
         <div
-          className="flex items-center gap-3.5 cursor-pointer select-none"
+          className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer select-none shrink-0"
           onClick={() => onNavigate('home')}
         >
           <DigiVirusLogo size="md" subtitleText="By Lab of digiVirus" />
@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
                 Live Audit
               </span>
             </div>
-            <p className="text-xs text-neutral-600 font-medium leading-tight">
+            <p className="hidden sm:block text-xs text-neutral-600 font-medium leading-tight whitespace-nowrap">
               Free Website SEO Checker <span className="text-neutral-400">&bull;</span> <span className="font-semibold text-neutral-800">By Lab of digiVirus</span>
             </p>
           </div>
@@ -108,11 +108,11 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           ) : (
             /* Logged Out / Public State */
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 id="header-login-btn"
                 onClick={onOpenLogin}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl text-neutral-700 hover:text-neutral-950 hover:bg-neutral-100 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl text-neutral-700 hover:text-neutral-950 hover:bg-neutral-100 transition-all cursor-pointer whitespace-nowrap"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Login</span>
@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-signup-btn"
                 onClick={onOpenSignup}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold rounded-xl bg-[#FF5500] hover:bg-[#E04400] text-white shadow-sm shadow-orange-500/20 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-xl bg-[#FF5500] hover:bg-[#E04400] text-white shadow-sm shadow-orange-500/20 transition-all cursor-pointer whitespace-nowrap"
               >
                 <span>Create Account</span>
               </button>
