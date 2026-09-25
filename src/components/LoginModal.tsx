@@ -51,6 +51,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       try {
         data = JSON.parse(text);
       } catch {
+        if (!res.ok) {
+          throw new Error(`Server error (${res.status}): Please check backend deployment.`);
+        }
         throw new Error('Server returned an unexpected response format.');
       }
 

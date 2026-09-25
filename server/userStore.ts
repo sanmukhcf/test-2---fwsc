@@ -36,7 +36,8 @@ export interface UserAuditRecord {
   jobSnapshot?: AuditJob;
 }
 
-const DATA_DIR = path.join(process.cwd(), '.data');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = isServerless ? path.join('/tmp', '.data') : path.join(process.cwd(), '.data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const AUDITS_FILE = path.join(DATA_DIR, 'audits.json');
 

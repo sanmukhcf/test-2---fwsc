@@ -52,6 +52,9 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       try {
         data = JSON.parse(text);
       } catch {
+        if (!res.ok) {
+          throw new Error(`Server error (${res.status}): Please check backend deployment.`);
+        }
         throw new Error('Server returned an invalid response.');
       }
 
