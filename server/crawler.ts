@@ -11,7 +11,7 @@ import {
 import { isPrivateOrReservedIp } from './security.js';
 
 const USER_AGENT =
-  'Mozilla/5.0 (compatible; FWSC-Bot/1.0; +https://digivirus.in; digiVirus SEO Audit Engine)';
+  'Mozilla/5.0 (compatible; FWSC-Bot/1.0; By Lab of digiVirus SEO Audit Engine)';
 
 export async function checkReachability(initialUrl: string): Promise<ReachabilityCheck> {
   const redirectChain: RedirectHop[] = [];

@@ -6,24 +6,72 @@ import { RecentAudits } from './components/RecentAudits';
 import { AuditProgress } from './components/AuditProgress';
 import { AuditFailureView } from './components/AuditFailureView';
 import { AuditDashboard } from './components/AuditDashboard';
-import { AuditJob, AuditStatus, ReachabilityCheck, ReachabilityErrorType, RecentSite } from './types';
-import { Zap, ShieldCheck, Search, Activity, Cpu } from 'lucide-react';
+import { SignupModal } from './components/SignupModal';
+import { LoginModal } from './components/LoginModal';
+import { ForgotPasswordModal } from './components/ForgotPasswordModal';
+import { UserDashboard } from './components/UserDashboard';
+import {
+  AuditJob,
+  AuditStatus,
+  ReachabilityCheck,
+  ReachabilityErrorType,
+  RecentSite,
+  UserProfile,
+  UserAuditRecord
+} from './types';
+import { Zap, ShieldCheck, Activity, Cpu } from 'lucide-react';
+
+const STORAGE_KEY_TOKEN = 'fwsc_auth_token';
+const STORAGE_KEY_USER = 'fwsc_auth_user';
 
 export default function App() {
-  const [status, setStatus] = useState<AuditStatus | 'idle'>('idle');
+  // Auth State
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_USER);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [authToken, setAuthToken] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_TOKEN) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Navigation View: 'home' | 'dashboard' | 'audit_progress' | 'audit_report' | 'audit_failure'
+  const [currentView, setCurrentView] = useState<
+    'home' | 'dashboard' | 'audit_progress' | 'audit_report' | 'audit_failure'
+  >('home');
+
+  // Modals
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+
+  // Queued audit URL (when guest clicks audit, they must sign up / log in first, then audit starts automatically)
+  const [pendingAuditUrl, setPendingAuditUrl] = useState<string | null>(null);
+
+  // Audit state
+  const [auditStatus, setAuditStatus] = useState<AuditStatus>('idle');
   const [activeJob, setActiveJob] = useState<AuditJob | null>(null);
   const [recentSites, setRecentSites] = useState<RecentSite[]>([]);
-  const [currentUrl, setCurrentUrl] = useState<string>('');
+  const [targetUrl, setTargetUrl] = useState<string>('');
+
   const [progress, setProgress] = useState<{
     crawledPages: number;
     targetPages: number;
     currentUrl?: string;
-    stage?: string;
+    stageMessage?: string;
   }>({
     crawledPages: 0,
-    targetPages: 5,
+    targetPages: 10,
     currentUrl: '',
-    stage: 'Initializing'
+    stageMessage: 'Validating website...'
   });
 
   const [failureInfo, setFailureInfo] = useState<{
@@ -33,7 +81,7 @@ export default function App() {
     reachability?: ReachabilityCheck;
   } | null>(null);
 
-  // Load recently checked and validated websites
+  // Load recently audited validated sites
   const loadRecentSites = async () => {
     try {
       const res = await fetch('/api/audit/recent');
@@ -52,24 +100,128 @@ export default function App() {
     loadRecentSites();
   }, []);
 
-  const handleStartAudit = async (targetUrl: string, maxPages: number) => {
-    setCurrentUrl(targetUrl);
+  // Verify auth session on load
+  useEffect(() => {
+    if (authToken) {
+      fetch('/api/user/profile', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      })
+        .then(res => res.text())
+        .then(text => {
+          try {
+            const data = JSON.parse(text);
+            if (data.success && data.user) {
+              setUser(data.user);
+              localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
+            } else {
+              // Token invalid
+              setUser(null);
+              setAuthToken(null);
+              localStorage.removeItem(STORAGE_KEY_TOKEN);
+              localStorage.removeItem(STORAGE_KEY_USER);
+            }
+          } catch {}
+        })
+        .catch(() => {});
+    }
+  }, [authToken]);
+
+  // Auth Handlers
+  const handleAuthSuccess = (authUser: UserProfile, token: string) => {
+    setUser(authUser);
+    setAuthToken(token);
+    try {
+      localStorage.setItem(STORAGE_KEY_TOKEN, token);
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(authUser));
+    } catch {}
+
+    setIsSignupOpen(false);
+    setIsLoginOpen(false);
+    setIsForgotPasswordOpen(false);
+
+    // If an audit was queued before signing in/up, trigger it immediately
+    if (pendingAuditUrl) {
+      const queued = pendingAuditUrl;
+      setPendingAuditUrl(null);
+      executeAudit(queued, authUser.id, authUser.websiteName);
+    } else {
+      // Go to user dashboard
+      setCurrentView('dashboard');
+    }
+  };
+
+  const handleLogout = async () => {
+    if (authToken) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+      } catch {}
+    }
+    setUser(null);
+    setAuthToken(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_USER);
+    } catch {}
+    setCurrentView('home');
+    setAuditStatus('idle');
+    setActiveJob(null);
+    setFailureInfo(null);
+  };
+
+  // User initiates audit (Entry Flow)
+  const handleRequestAudit = (urlToAudit: string) => {
+    if (!user) {
+      // Requirement 3: If not logged in -> show Signup -> create account -> automatically log in -> start requested audit
+      setPendingAuditUrl(urlToAudit);
+      setIsSignupOpen(true);
+      return;
+    }
+
+    // Already logged in -> directly start the audit
+    executeAudit(urlToAudit, user.id, user.websiteName);
+  };
+
+  // Real Crawler Execution Pipeline with 5 Distinct Audit States
+  const executeAudit = async (urlToAudit: string, userId?: string, websiteName?: string) => {
+    setTargetUrl(urlToAudit);
     setFailureInfo(null);
     setActiveJob(null);
-    setStatus('validating');
+    setCurrentView('audit_progress');
+
+    // State 1: Validating Website
+    setAuditStatus('validating_website');
     setProgress({
       crawledPages: 0,
-      targetPages: maxPages,
-      currentUrl: targetUrl,
-      stage: 'Validating domain and checking DNS records...'
+      targetPages: 10,
+      currentUrl: urlToAudit,
+      stageMessage: 'Validating Website (Checking URL format & SSRF security)...'
     });
 
     try {
-      // Step 1: Start audit job (verifies URL, DNS existence, and reachability)
+      // Step 1: Start audit job (verifies URL, DNS existence, reachability)
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      // State 2: Checking Domain
+      setAuditStatus('checking_domain');
+      setProgress(prev => ({
+        ...prev,
+        stageMessage: 'Checking Domain (Verifying DNS lookup & HTTP reachability)...'
+      }));
+
       const startRes = await fetch('/api/audit/start', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: targetUrl, maxPages })
+        headers,
+        body: JSON.stringify({
+          url: urlToAudit,
+          userId,
+          websiteName
+        })
       });
 
       const startText = await startRes.text();
@@ -77,9 +229,10 @@ export default function App() {
       try {
         startData = JSON.parse(startText);
       } catch {
-        setStatus('failed');
+        setAuditStatus('failed');
+        setCurrentView('audit_failure');
         setFailureInfo({
-          url: targetUrl,
+          url: urlToAudit,
           errorType: 'UNKNOWN',
           message: 'Server returned an invalid non-JSON response during initialization.'
         });
@@ -87,24 +240,26 @@ export default function App() {
       }
 
       if (!startData.success) {
-        setStatus('failed');
+        setAuditStatus('failed');
+        setCurrentView('audit_failure');
         setFailureInfo({
-          url: targetUrl,
+          url: urlToAudit,
           errorType: startData.errorType || 'UNKNOWN',
-          message: startData.message || 'Audit initialization failed.',
+          message: startData.message || 'Website verification failed.',
           reachability: startData.reachability
         });
         return;
       }
 
       const jobId = startData.jobId;
-      setStatus('crawling');
+
+      // State 3: Crawling Web (Discovering internal pages with batch architecture)
+      setAuditStatus('crawling_web');
       setProgress(prev => ({
         ...prev,
-        stage: `DNS & Reachability verified (HTTP ${startData.reachability?.httpStatus || 200}). Starting live crawler...`
+        stageMessage: `Domain verified (HTTP ${startData.reachability?.httpStatus || 200}). Discovering & crawling indexable pages...`
       }));
 
-      // Step 2: Batch Crawling loop (crawls small batches per request to ensure Vercel compatibility)
       let isComplete = false;
       let safetyCounter = 0;
       const maxBatches = 60;
@@ -130,9 +285,10 @@ export default function App() {
         }
 
         if (batchData.status === 'failed') {
-          setStatus('failed');
+          setAuditStatus('failed');
+          setCurrentView('audit_failure');
           setFailureInfo({
-            url: targetUrl,
+            url: urlToAudit,
             errorType: batchData.failureCode || 'UNKNOWN',
             message: batchData.failureReason || 'Crawl failed.'
           });
@@ -142,16 +298,35 @@ export default function App() {
         if (batchData.progress) {
           setProgress({
             crawledPages: batchData.progress.crawledPages || batchData.crawledCount || 0,
-            targetPages: maxPages,
+            targetPages: batchData.targetCount || 10,
             currentUrl: batchData.progress.currentUrl,
-            stage: batchData.progress.stage || 'Crawling site pages...'
+            stageMessage: batchData.progress.stage || 'Crawling site pages...'
           });
         }
 
+        if (batchData.status === 'analyzing') {
+          // State 4: Analyzing SEO
+          setAuditStatus('analyzing_seo');
+          setProgress(prev => ({
+            ...prev,
+            stageMessage: 'Analyzing SEO (Evaluating on-page, tech, content & links)...'
+          }));
+        }
+
         if (batchData.isComplete || batchData.status === 'completed') {
+          // State 5: Saving Audit
+          setAuditStatus('saving_audit');
+          setProgress(prev => ({
+            ...prev,
+            stageMessage: 'Saving Audit (Archiving report to private history)...'
+          }));
+
+          await new Promise(r => setTimeout(r, 600));
+
           isComplete = true;
-          setStatus('completed');
+          setAuditStatus('completed');
           setActiveJob(batchData.job);
+          setCurrentView('audit_report');
           await loadRecentSites();
           break;
         }
@@ -165,36 +340,92 @@ export default function App() {
       }
     } catch (err: any) {
       console.error('Audit execution error:', err);
-      setStatus('failed');
+      setAuditStatus('failed');
+      setCurrentView('audit_failure');
       setFailureInfo({
-        url: targetUrl,
+        url: urlToAudit,
         errorType: 'UNKNOWN',
         message: err.message || 'An unexpected error occurred while executing the crawler.'
       });
     }
   };
 
-  const handleReset = () => {
-    setStatus('idle');
+  const handleViewHistoricalReport = (record: UserAuditRecord) => {
+    if (record.jobSnapshot) {
+      setActiveJob(record.jobSnapshot);
+      setCurrentView('audit_report');
+    } else {
+      // Re-run or fetch from server
+      fetch(`/api/user/audits/${record.id}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      })
+        .then(r => r.text())
+        .then(text => {
+          try {
+            const data = JSON.parse(text);
+            if (data.success && data.audit?.jobSnapshot) {
+              setActiveJob(data.audit.jobSnapshot);
+              setCurrentView('audit_report');
+            } else {
+              // If snapshot missing, re-audit
+              executeAudit(record.url, user?.id, user?.websiteName);
+            }
+          } catch {
+            executeAudit(record.url, user?.id, user?.websiteName);
+          }
+        })
+        .catch(() => {
+          executeAudit(record.url, user?.id, user?.websiteName);
+        });
+    }
+  };
+
+  const handleResetToHome = () => {
+    setCurrentView('home');
+    setAuditStatus('idle');
     setActiveJob(null);
     setFailureInfo(null);
   };
 
-  const isBusy = status === 'validating' || status === 'checking_reachability' || status === 'crawling' || status === 'analyzing';
+  const isBusy =
+    currentView === 'audit_progress' ||
+    auditStatus === 'validating_website' ||
+    auditStatus === 'checking_domain' ||
+    auditStatus === 'crawling_web' ||
+    auditStatus === 'analyzing_seo' ||
+    auditStatus === 'saving_audit';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#111827] font-sans antialiased">
       {/* Global Header */}
-      <Header onNewAuditClick={handleReset} isAuditing={isBusy} />
+      <Header
+        user={user}
+        currentView={currentView}
+        onNavigate={view => {
+          if (view === 'dashboard') {
+            if (user) {
+              setCurrentView('dashboard');
+            } else {
+              setIsLoginOpen(true);
+            }
+          } else {
+            handleResetToHome();
+          }
+        }}
+        onOpenLogin={() => setIsLoginOpen(true)}
+        onOpenSignup={() => setIsSignupOpen(true)}
+        onLogout={handleLogout}
+        isAuditing={isBusy}
+      />
 
-      {/* Main Content Area */}
+      {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* State 1: IDLE / Initial Landing Bar */}
-        {status === 'idle' && (
+        {/* VIEW 1: HOME LANDING PAGE */}
+        {currentView === 'home' && (
           <div className="space-y-12 animate-fadeIn">
-            {/* Hero Header */}
+            {/* Hero Section */}
             <div className="text-center max-w-3xl mx-auto space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-xs font-bold text-[#FF5500] uppercase tracking-wider">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs font-bold text-[#FF5500] uppercase tracking-wider">
                 <Zap className="w-3.5 h-3.5 text-[#FF5500]" />
                 Zero Mock Data &bull; Real Server-Side Crawler
               </div>
@@ -208,16 +439,16 @@ export default function App() {
               </p>
             </div>
 
-            {/* Input Bar */}
+            {/* Input Bar (No page limit UI - automatic page discovery) */}
             <UrlInputBar
-              onStartAudit={handleStartAudit}
+              onStartAudit={handleRequestAudit}
               isLoading={isBusy}
-              initialUrl={currentUrl}
+              initialUrl={targetUrl}
             />
 
             {/* Value Highlights Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto pt-6">
-              <div className="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs">
+              <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-xs">
                 <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#FF5500] flex items-center justify-center mb-3">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
@@ -229,19 +460,19 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs">
+              <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-xs">
                 <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#FF5500] flex items-center justify-center mb-3">
                   <Activity className="w-5 h-5" />
                 </div>
                 <h3 className="text-sm font-bold text-neutral-900 mb-1">
-                  Batch Serverless Architecture
+                  Automatic Page Discovery
                 </h3>
                 <p className="text-xs text-neutral-500 leading-relaxed">
-                  Batched crawl execution ensures zero gateway timeouts on Vercel, Cloud Run, and container environments alike.
+                  The crawler automatically discovers and audits internal indexable pages using safe serverless batches without hardcoded limits.
                 </p>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-neutral-200/80 shadow-xs">
+              <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-xs">
                 <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#FF5500] flex items-center justify-center mb-3">
                   <Cpu className="w-5 h-5" />
                 </div>
@@ -254,48 +485,103 @@ export default function App() {
               </div>
             </div>
 
-            {/* Recently Audited Sites (Real sites only) */}
+            {/* Recently Audited Sites (Verified live domains only) */}
             <RecentAudits
               recentSites={recentSites}
-              onSelectSite={url => handleStartAudit(url, 5)}
+              onSelectSite={url => handleRequestAudit(url)}
             />
           </div>
         )}
 
-        {/* State 2: Progress (Validating, Checking, Crawling, Analyzing) */}
-        {isBusy && (
-          <AuditProgress
-            status={status}
-            targetUrl={currentUrl}
-            crawledPages={progress.crawledPages}
-            targetPages={progress.targetPages}
-            currentUrl={progress.currentUrl}
-            stageMessage={progress.stage}
+        {/* VIEW 2: USER DASHBOARD */}
+        {currentView === 'dashboard' && user && authToken && (
+          <UserDashboard
+            user={user}
+            authToken={authToken}
+            onStartNewAudit={handleRequestAudit}
+            onViewAuditReport={handleViewHistoricalReport}
+            onLogout={handleLogout}
+            isLoading={isBusy}
           />
         )}
 
-        {/* State 3: Failure View */}
-        {status === 'failed' && failureInfo && (
+        {/* VIEW 3: AUDIT PROGRESS (5 Distinct States) */}
+        {currentView === 'audit_progress' && (
+          <AuditProgress
+            status={auditStatus}
+            targetUrl={targetUrl}
+            crawledPages={progress.crawledPages}
+            targetPages={progress.targetPages}
+            currentUrl={progress.currentUrl}
+            stageMessage={progress.stageMessage}
+          />
+        )}
+
+        {/* VIEW 4: AUDIT FAILURE VIEW */}
+        {currentView === 'audit_failure' && failureInfo && (
           <AuditFailureView
             url={failureInfo.url}
             errorType={failureInfo.errorType}
             message={failureInfo.message}
             reachability={failureInfo.reachability}
-            onTryAgain={handleReset}
+            onTryAgain={handleResetToHome}
           />
         )}
 
-        {/* State 4: Completed Audit Report */}
-        {status === 'completed' && activeJob && (
+        {/* VIEW 5: COMPLETED AUDIT DASHBOARD / REPORT */}
+        {currentView === 'audit_report' && activeJob && (
           <AuditDashboard
             job={activeJob}
-            onReAudit={() => handleStartAudit(activeJob.targetUrl, activeJob.maxPages)}
+            onReAudit={() => handleRequestAudit(activeJob.targetUrl)}
           />
         )}
       </main>
 
       {/* Global Footer */}
       <Footer />
+
+      {/* Signup Modal */}
+      <SignupModal
+        isOpen={isSignupOpen}
+        onClose={() => {
+          setIsSignupOpen(false);
+          setPendingAuditUrl(null);
+        }}
+        onSwitchToLogin={() => {
+          setIsSignupOpen(false);
+          setIsLoginOpen(true);
+        }}
+        onSignupSuccess={handleAuthSuccess}
+        initialWebsiteUrl={pendingAuditUrl || ''}
+      />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => {
+          setIsLoginOpen(false);
+          setPendingAuditUrl(null);
+        }}
+        onSwitchToSignup={() => {
+          setIsLoginOpen(false);
+          setIsSignupOpen(true);
+        }}
+        onOpenForgotPassword={() => {
+          setIsLoginOpen(false);
+          setIsForgotPasswordOpen(true);
+        }}
+        onLoginSuccess={handleAuthSuccess}
+      />
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onSwitchToLogin={() => {
+          setIsForgotPasswordOpen(false);
+          setIsLoginOpen(true);
+        }}
+      />
     </div>
   );
 }

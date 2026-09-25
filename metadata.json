@@ -1,6 +1,6 @@
 {
   "name": "FWSC - Free Website SEO Checker",
-  "description": "Real production-ready website SEO auditing tool with server-side crawler by digiVirus.",
+  "description": "Real production-ready website SEO auditing tool with server-side crawler. By Lab of digiVirus.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

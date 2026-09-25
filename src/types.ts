@@ -1,10 +1,47 @@
 export type AuditStatus =
-  | 'validating'
-  | 'checking_reachability'
-  | 'crawling'
-  | 'analyzing'
+  | 'idle'
+  | 'validating_website'
+  | 'checking_domain'
+  | 'crawling_web'
+  | 'analyzing_seo'
+  | 'saving_audit'
+  | 'validating' // legacy compatibility
+  | 'checking_reachability' // legacy compatibility
+  | 'crawling' // legacy compatibility
+  | 'analyzing' // legacy compatibility
   | 'completed'
   | 'failed';
+
+export interface UserProfile {
+  id: string;
+  fullName: string;
+  websiteName: string;
+  websiteUrl: string;
+  city: string;
+  mobileNumber: string;
+  email: string;
+  profession: string;
+  username: string;
+  createdAt: number;
+}
+
+export interface UserAuditRecord {
+  id: string;
+  userId: string;
+  jobId: string;
+  websiteName: string;
+  url: string;
+  domain: string;
+  timestamp: number;
+  status: 'completed' | 'failed';
+  score: number;
+  criticalIssues: number;
+  warningIssues: number;
+  noticeIssues: number;
+  passedChecks: number;
+  pagesCrawled: number;
+  jobSnapshot?: AuditJob;
+}
 
 export type ReachabilityErrorType =
   | 'NONE'
@@ -155,6 +192,13 @@ export interface AuditIssue {
   impactScore?: number;
 }
 
+export interface AuditStartRequest {
+  url: string;
+  maxPages?: number;
+  userId?: string;
+  websiteName?: string;
+}
+
 export interface ScoreBreakdown {
   overall: number;
   technical: number;
@@ -165,6 +209,8 @@ export interface ScoreBreakdown {
 
 export interface AuditJob {
   id: string;
+  userId?: string;
+  websiteName?: string;
   targetUrl: string;
   inputUrl: string;
   finalUrl: string;

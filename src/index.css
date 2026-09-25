@@ -1,1 +1,58 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #F8F9FA;
+    color: #111827;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Print-to-PDF styles */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header,
+  footer,
+  #header-new-audit-btn,
+  #start-audit-button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .shadow-xs,
+  .shadow-sm,
+  .shadow-md,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  .border {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Prevent page breaks inside cards */
+  .bg-white,
+  tr {
+    break-inside: avoid;
+  }
+}

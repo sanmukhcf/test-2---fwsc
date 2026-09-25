@@ -1,0 +1,574 @@
+{
+  "usr_1790362412116_e82c4563": [
+    {
+      "jobId": "c92c6165-16e9-4524-9ca1-08627bbd56d6",
+      "websiteName": "example.com",
+      "url": "https://example.com/",
+      "domain": "example.com",
+      "timestamp": 1790362442983,
+      "status": "completed",
+      "score": 94,
+      "criticalIssues": 0,
+      "warningIssues": 5,
+      "noticeIssues": 1,
+      "passedChecks": 5,
+      "pagesCrawled": 1,
+      "jobSnapshot": {
+        "id": "c92c6165-16e9-4524-9ca1-08627bbd56d6",
+        "userId": "usr_1790362412116_e82c4563",
+        "websiteName": "example.com",
+        "targetUrl": "https://example.com/",
+        "inputUrl": "https://example.com",
+        "finalUrl": "https://example.com/",
+        "hostname": "example.com",
+        "maxPages": 12,
+        "status": "completed",
+        "reachability": {
+          "isReachable": true,
+          "httpStatus": 200,
+          "statusText": "OK",
+          "responseTimeMs": 29,
+          "redirectChain": [],
+          "finalUrl": "https://example.com/",
+          "errorType": "NONE",
+          "resolvedIp": "2606:4700:10::6814:179a"
+        },
+        "progress": {
+          "crawledPages": 1,
+          "targetPages": 12,
+          "currentUrl": "https://example.com/",
+          "stage": "Audit completed"
+        },
+        "pages": [
+          {
+            "url": "https://example.com/",
+            "path": "/",
+            "status": 200,
+            "statusText": "OK",
+            "responseTimeMs": 17,
+            "contentType": "text/html",
+            "contentLengthBytes": 559,
+            "isHttps": true,
+            "title": "Example Domain",
+            "titleLength": 14,
+            "titleStatus": "too_short",
+            "description": "",
+            "descriptionLength": 0,
+            "descriptionStatus": "missing",
+            "h1List": [
+              "Example Domain"
+            ],
+            "h1Count": 1,
+            "h1Status": "good",
+            "h2List": [],
+            "h2Count": 0,
+            "canonicalUrl": null,
+            "canonicalStatus": "missing",
+            "wordCount": 17,
+            "readingTimeMinutes": 1,
+            "textToHtmlRatio": 22,
+            "images": [],
+            "totalImages": 0,
+            "missingAltCount": 0,
+            "internalLinks": [],
+            "externalLinks": [
+              {
+                "href": "https://iana.org/domains/example",
+                "text": "Learn more",
+                "isInternal": false,
+                "isAnchor": false
+              }
+            ],
+            "internalLinkCount": 0,
+            "externalLinkCount": 1,
+            "metaRobots": null,
+            "isNoindex": false,
+            "isNofollow": false,
+            "xRobotsTag": null,
+            "hasViewport": true,
+            "charset": "utf-8",
+            "hasHsts": false,
+            "hasFavicon": true,
+            "lang": "en"
+          }
+        ],
+        "issues": [
+          {
+            "id": "warn-missing-desc",
+            "category": "warning",
+            "title": "Pages Missing Meta Description",
+            "description": "1 page(s) do not provide a meta description. Search engines will generate snippets from random body text.",
+            "recommendation": "Add a compelling meta description between 70 and 160 characters to optimize click-through rates from search results.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "No meta description tag found"
+              }
+            ],
+            "impactScore": 5
+          },
+          {
+            "id": "warn-missing-canonical",
+            "category": "warning",
+            "title": "Missing Rel=Canonical Tags",
+            "description": "1 page(s) lack a canonical link tag. Canonicals protect against duplicate content penalties.",
+            "recommendation": "Add self-referencing rel=\"canonical\" tags to indicate preferred URLs to search engines.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "No rel=\"canonical\" link specified"
+              }
+            ],
+            "impactScore": 4
+          },
+          {
+            "id": "warn-missing-robots",
+            "category": "warning",
+            "title": "Robots.txt File Not Found",
+            "description": "Could not detect a robots.txt file at the domain root (/robots.txt).",
+            "recommendation": "Create a robots.txt file to guide search crawlers and link to your XML sitemap.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/robots.txt",
+                "detail": "HTTP 404"
+              }
+            ],
+            "impactScore": 3
+          },
+          {
+            "id": "warn-missing-sitemap",
+            "category": "warning",
+            "title": "XML Sitemap Not Detected",
+            "description": "Could not find a standard XML sitemap at /sitemap.xml or referenced in robots.txt.",
+            "recommendation": "Generate a sitemap.xml listing all canonical URLs and submit it to Google Search Console.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/sitemap.xml",
+                "detail": "HTTP 404"
+              }
+            ],
+            "impactScore": 4
+          },
+          {
+            "id": "warn-thin-content",
+            "category": "warning",
+            "title": "Low Word Count / Thin Content",
+            "description": "1 page(s) contain fewer than 200 words. Search engines generally rank comprehensive, in-depth content higher.",
+            "recommendation": "Expand content with substantive, helpful answers that satisfy search user intent.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Only 17 words detected"
+              }
+            ],
+            "impactScore": 3
+          },
+          {
+            "id": "notice-short-titles",
+            "category": "notice",
+            "title": "Title Tag is Too Short (< 30 characters)",
+            "description": "1 page(s) have very brief title tags that may not fully utilize search result real estate.",
+            "recommendation": "Expand title to 30-60 characters incorporating primary keywords and brand name.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Title is only 14 chars: \"Example Domain\""
+              }
+            ],
+            "impactScore": 1
+          },
+          {
+            "id": "pass-https",
+            "category": "passed",
+            "title": "HTTPS & SSL Protocol Enforced",
+            "description": "All crawled pages are securely delivered over HTTPS encryption.",
+            "recommendation": "Maintain active SSL certificates and HSTS security headers.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Secure HTTPS"
+              }
+            ]
+          },
+          {
+            "id": "pass-http-status",
+            "category": "passed",
+            "title": "HTTP 200 OK Status on All Pages",
+            "description": "All crawled pages returned clean 200 OK status codes with zero 4xx/5xx errors.",
+            "recommendation": "Continue monitoring for broken links periodically.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Status 200 OK"
+              }
+            ]
+          },
+          {
+            "id": "pass-titles-present",
+            "category": "passed",
+            "title": "Title Tags Present on All Pages",
+            "description": "Every crawled page contains a primary title tag.",
+            "recommendation": "Ensure titles remain targeted and updated as content evolves.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Title: \"Example Domain...\""
+              }
+            ]
+          },
+          {
+            "id": "pass-h1-hierarchy",
+            "category": "passed",
+            "title": "Optimal H1 Heading Structure",
+            "description": "Every crawled page has exactly one main <h1> heading tag.",
+            "recommendation": "Maintain structured heading hierarchies (H1 -> H2 -> H3).",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "H1: \"Example Domain...\""
+              }
+            ]
+          },
+          {
+            "id": "pass-viewport",
+            "category": "passed",
+            "title": "Mobile Viewport Configured",
+            "description": "All crawled pages declare a responsive viewport for mobile devices.",
+            "recommendation": "Ensure touch targets and responsive layouts remain verified.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Viewport configured"
+              }
+            ]
+          }
+        ],
+        "scoreBreakdown": {
+          "overall": 94,
+          "technical": 93,
+          "onPage": 90,
+          "content": 97,
+          "links": 100
+        },
+        "stats": {
+          "totalCrawled": 1,
+          "avgResponseTimeMs": 17,
+          "totalImages": 0,
+          "totalMissingAlt": 0,
+          "totalInternalLinks": 0,
+          "totalExternalLinks": 1,
+          "criticalIssuesCount": 0,
+          "warningIssuesCount": 5,
+          "noticeIssuesCount": 1,
+          "passedChecksCount": 5
+        },
+        "createdAt": 1790362442890,
+        "robotsTxt": {
+          "exists": false,
+          "status": 404,
+          "url": "https://example.com/robots.txt",
+          "contentSnippet": "",
+          "sitemapsFound": [],
+          "disallowAll": false,
+          "rulesSummary": "HTTP 404 when requesting /robots.txt"
+        },
+        "sitemapXml": {
+          "exists": false,
+          "status": 404,
+          "url": "https://example.com/sitemap.xml",
+          "urlCount": 0,
+          "urlsSample": [],
+          "isXml": false
+        },
+        "completedAt": 1790362442983
+      },
+      "id": "rec_1790362442983_54df2e69",
+      "userId": "usr_1790362412116_e82c4563"
+    },
+    {
+      "jobId": "f1d6d2b4-37e1-4e81-bb6e-337b7b94071a",
+      "websiteName": "example.com",
+      "url": "https://example.com/",
+      "domain": "example.com",
+      "timestamp": 1790362430580,
+      "status": "completed",
+      "score": 94,
+      "criticalIssues": 0,
+      "warningIssues": 5,
+      "noticeIssues": 1,
+      "passedChecks": 5,
+      "pagesCrawled": 1,
+      "jobSnapshot": {
+        "id": "f1d6d2b4-37e1-4e81-bb6e-337b7b94071a",
+        "userId": "usr_1790362412116_e82c4563",
+        "websiteName": "example.com",
+        "targetUrl": "https://example.com/",
+        "inputUrl": "https://example.com",
+        "finalUrl": "https://example.com/",
+        "hostname": "example.com",
+        "maxPages": 12,
+        "status": "completed",
+        "reachability": {
+          "isReachable": true,
+          "httpStatus": 200,
+          "statusText": "OK",
+          "responseTimeMs": 53,
+          "redirectChain": [],
+          "finalUrl": "https://example.com/",
+          "errorType": "NONE",
+          "resolvedIp": "2606:4700:10::ac42:93f3"
+        },
+        "progress": {
+          "crawledPages": 1,
+          "targetPages": 12,
+          "currentUrl": "https://example.com/",
+          "stage": "Audit completed"
+        },
+        "pages": [
+          {
+            "url": "https://example.com/",
+            "path": "/",
+            "status": 200,
+            "statusText": "OK",
+            "responseTimeMs": 21,
+            "contentType": "text/html",
+            "contentLengthBytes": 559,
+            "isHttps": true,
+            "title": "Example Domain",
+            "titleLength": 14,
+            "titleStatus": "too_short",
+            "description": "",
+            "descriptionLength": 0,
+            "descriptionStatus": "missing",
+            "h1List": [
+              "Example Domain"
+            ],
+            "h1Count": 1,
+            "h1Status": "good",
+            "h2List": [],
+            "h2Count": 0,
+            "canonicalUrl": null,
+            "canonicalStatus": "missing",
+            "wordCount": 17,
+            "readingTimeMinutes": 1,
+            "textToHtmlRatio": 22,
+            "images": [],
+            "totalImages": 0,
+            "missingAltCount": 0,
+            "internalLinks": [],
+            "externalLinks": [
+              {
+                "href": "https://iana.org/domains/example",
+                "text": "Learn more",
+                "isInternal": false,
+                "isAnchor": false
+              }
+            ],
+            "internalLinkCount": 0,
+            "externalLinkCount": 1,
+            "metaRobots": null,
+            "isNoindex": false,
+            "isNofollow": false,
+            "xRobotsTag": null,
+            "hasViewport": true,
+            "charset": "utf-8",
+            "hasHsts": false,
+            "hasFavicon": true,
+            "lang": "en"
+          }
+        ],
+        "issues": [
+          {
+            "id": "warn-missing-desc",
+            "category": "warning",
+            "title": "Pages Missing Meta Description",
+            "description": "1 page(s) do not provide a meta description. Search engines will generate snippets from random body text.",
+            "recommendation": "Add a compelling meta description between 70 and 160 characters to optimize click-through rates from search results.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "No meta description tag found"
+              }
+            ],
+            "impactScore": 5
+          },
+          {
+            "id": "warn-missing-canonical",
+            "category": "warning",
+            "title": "Missing Rel=Canonical Tags",
+            "description": "1 page(s) lack a canonical link tag. Canonicals protect against duplicate content penalties.",
+            "recommendation": "Add self-referencing rel=\"canonical\" tags to indicate preferred URLs to search engines.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "No rel=\"canonical\" link specified"
+              }
+            ],
+            "impactScore": 4
+          },
+          {
+            "id": "warn-missing-robots",
+            "category": "warning",
+            "title": "Robots.txt File Not Found",
+            "description": "Could not detect a robots.txt file at the domain root (/robots.txt).",
+            "recommendation": "Create a robots.txt file to guide search crawlers and link to your XML sitemap.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/robots.txt",
+                "detail": "HTTP 404"
+              }
+            ],
+            "impactScore": 3
+          },
+          {
+            "id": "warn-missing-sitemap",
+            "category": "warning",
+            "title": "XML Sitemap Not Detected",
+            "description": "Could not find a standard XML sitemap at /sitemap.xml or referenced in robots.txt.",
+            "recommendation": "Generate a sitemap.xml listing all canonical URLs and submit it to Google Search Console.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/sitemap.xml",
+                "detail": "HTTP 404"
+              }
+            ],
+            "impactScore": 4
+          },
+          {
+            "id": "warn-thin-content",
+            "category": "warning",
+            "title": "Low Word Count / Thin Content",
+            "description": "1 page(s) contain fewer than 200 words. Search engines generally rank comprehensive, in-depth content higher.",
+            "recommendation": "Expand content with substantive, helpful answers that satisfy search user intent.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Only 17 words detected"
+              }
+            ],
+            "impactScore": 3
+          },
+          {
+            "id": "notice-short-titles",
+            "category": "notice",
+            "title": "Title Tag is Too Short (< 30 characters)",
+            "description": "1 page(s) have very brief title tags that may not fully utilize search result real estate.",
+            "recommendation": "Expand title to 30-60 characters incorporating primary keywords and brand name.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Title is only 14 chars: \"Example Domain\""
+              }
+            ],
+            "impactScore": 1
+          },
+          {
+            "id": "pass-https",
+            "category": "passed",
+            "title": "HTTPS & SSL Protocol Enforced",
+            "description": "All crawled pages are securely delivered over HTTPS encryption.",
+            "recommendation": "Maintain active SSL certificates and HSTS security headers.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Secure HTTPS"
+              }
+            ]
+          },
+          {
+            "id": "pass-http-status",
+            "category": "passed",
+            "title": "HTTP 200 OK Status on All Pages",
+            "description": "All crawled pages returned clean 200 OK status codes with zero 4xx/5xx errors.",
+            "recommendation": "Continue monitoring for broken links periodically.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Status 200 OK"
+              }
+            ]
+          },
+          {
+            "id": "pass-titles-present",
+            "category": "passed",
+            "title": "Title Tags Present on All Pages",
+            "description": "Every crawled page contains a primary title tag.",
+            "recommendation": "Ensure titles remain targeted and updated as content evolves.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Title: \"Example Domain...\""
+              }
+            ]
+          },
+          {
+            "id": "pass-h1-hierarchy",
+            "category": "passed",
+            "title": "Optimal H1 Heading Structure",
+            "description": "Every crawled page has exactly one main <h1> heading tag.",
+            "recommendation": "Maintain structured heading hierarchies (H1 -> H2 -> H3).",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "H1: \"Example Domain...\""
+              }
+            ]
+          },
+          {
+            "id": "pass-viewport",
+            "category": "passed",
+            "title": "Mobile Viewport Configured",
+            "description": "All crawled pages declare a responsive viewport for mobile devices.",
+            "recommendation": "Ensure touch targets and responsive layouts remain verified.",
+            "impactedPages": [
+              {
+                "url": "https://example.com/",
+                "detail": "Viewport configured"
+              }
+            ]
+          }
+        ],
+        "scoreBreakdown": {
+          "overall": 94,
+          "technical": 93,
+          "onPage": 90,
+          "content": 97,
+          "links": 100
+        },
+        "stats": {
+          "totalCrawled": 1,
+          "avgResponseTimeMs": 21,
+          "totalImages": 0,
+          "totalMissingAlt": 0,
+          "totalInternalLinks": 0,
+          "totalExternalLinks": 1,
+          "criticalIssuesCount": 0,
+          "warningIssuesCount": 5,
+          "noticeIssuesCount": 1,
+          "passedChecksCount": 5
+        },
+        "createdAt": 1790362427597,
+        "robotsTxt": {
+          "exists": false,
+          "status": 404,
+          "url": "https://example.com/robots.txt",
+          "contentSnippet": "",
+          "sitemapsFound": [],
+          "disallowAll": false,
+          "rulesSummary": "HTTP 404 when requesting /robots.txt"
+        },
+        "sitemapXml": {
+          "exists": false,
+          "status": 404,
+          "url": "https://example.com/sitemap.xml",
+          "urlCount": 0,
+          "urlsSample": [],
+          "isXml": false
+        },
+        "completedAt": 1790362430580
+      },
+      "id": "rec_1790362430580_2262dc54",
+      "userId": "usr_1790362412116_e82c4563"
+    }
+  ]
+}

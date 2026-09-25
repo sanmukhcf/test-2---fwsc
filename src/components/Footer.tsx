@@ -9,13 +9,13 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Col 1: Brand Info */}
           <div className="md:col-span-2 space-y-4">
-            <DigiVirusLogo size="md" />
+            <DigiVirusLogo size="md" subtitleText="By Lab of digiVirus" />
             <div className="mt-2">
               <h4 className="text-base font-bold text-neutral-900">
                 FWSC — Free Website SEO Checker
               </h4>
               <p className="text-sm text-neutral-500 mt-1 max-w-md leading-relaxed">
-                An authentic, server-side website crawler and SEO diagnostic platform built by <span className="font-semibold text-neutral-700">digiVirus</span>.
+                An authentic, server-side website crawler and SEO diagnostic platform created <span className="font-semibold text-neutral-800">By Lab of digiVirus</span>.
                 Delivering uncompromised, ground-truth SEO audits without reliance on third-party marketing APIs or synthetic metrics.
               </p>
             </div>
@@ -27,7 +27,7 @@ export const Footer: React.FC = () => {
                 <Shield className="w-3.5 h-3.5 text-[#FF5500]" /> DNS & Reachability Guard
               </span>
               <span className="flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-[#FF5500]" /> 50+ Real SEO Diagnostics
+                <Cpu className="w-3.5 h-3.5 text-[#FF5500]" /> In-House SEO Diagnostics
               </span>
             </div>
           </div>
@@ -53,7 +53,7 @@ export const Footer: React.FC = () => {
               Engine Specifications
             </h5>
             <div className="space-y-2 text-xs text-neutral-500 font-mono bg-neutral-50 p-3.5 rounded-xl border border-neutral-200/70">
-              <div className="flex items-center gap-1.5 font-semibold text-neutral-700">
+              <div className="flex items-center gap-1.5 font-semibold text-neutral-800">
                 <Terminal className="w-3.5 h-3.5 text-[#FF5500]" /> FWSC-Bot/1.0
               </div>
               <div>SSRF Protection: Active</div>
@@ -66,12 +66,12 @@ export const Footer: React.FC = () => {
 
         <div className="pt-8 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
           <p>
-            &copy; {new Date().getFullYear()} FWSC by <span className="font-semibold text-neutral-600">digiVirus</span>. All rights reserved.
+            &copy; {new Date().getFullYear()} FWSC. Free Website SEO Checker. <span className="font-semibold text-neutral-700">By Lab of digiVirus</span>.
           </p>
           <p className="flex items-center gap-2">
             <span>Production Real-Crawl SEO Engine</span>
             <span>&bull;</span>
-            <span className="text-[#FF5500] font-medium">digiVirus Technology</span>
+            <span className="text-[#FF5500] font-semibold">By Lab of digiVirus</span>
           </p>
         </div>
       </div>
