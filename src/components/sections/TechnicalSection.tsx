@@ -27,7 +27,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({ job }) => {
   const missingViewportPages = pages.filter(p => !p.hasViewport);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0 w-full">
       {/* Grid of Key Technical Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* HTTPS Card */}

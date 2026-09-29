@@ -40,7 +40,7 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ job }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0 w-full">
       {/* Discovered Topic & Semantic Context Banner */}
       {job.siteContext && (
         <div className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-xs space-y-3">

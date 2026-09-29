@@ -39,7 +39,7 @@ export const OnPageSection: React.FC<OnPageSectionProps> = ({ job }) => {
   const hasTwitter = pages.filter(p => p.twitterCard);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0 w-full">
       {/* 3 Main On-Page Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Title Tag Analysis Card */}

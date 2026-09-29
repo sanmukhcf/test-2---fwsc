@@ -46,9 +46,9 @@ export const LinksSection: React.FC<LinksSectionProps> = ({ job }) => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0 w-full">
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 min-w-0 w-full">
         {/* Total Internal Links */}
         <div className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-xs">
           <div className="flex items-center justify-between text-neutral-500 mb-2">
@@ -141,7 +141,7 @@ export const LinksSection: React.FC<LinksSectionProps> = ({ job }) => {
                 key={idx}
                 className="p-3 bg-neutral-50/70 hover:bg-orange-50/20 rounded-xl border border-neutral-200/80 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
               >
-                <div className="truncate max-w-xl">
+                <div className="truncate max-w-xl min-w-0 flex-1">
                   <a
                     href={item.href}
                     target="_blank"

@@ -280,7 +280,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       </div>
 
       {/* Previous Audits Section */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-neutral-200 shadow-xs space-y-4 sm:space-y-6 max-w-full min-w-0 overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -331,8 +331,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto max-w-full min-w-0 w-full">
+            <table className="w-full text-left border-collapse min-w-[640px]">
               <thead>
                 <tr className="border-b border-neutral-200 text-[11px] font-bold uppercase tracking-wider text-neutral-400">
                   <th className="pb-3 px-3">Website & Domain</th>

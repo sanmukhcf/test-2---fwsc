@@ -396,7 +396,7 @@ export default function App() {
     auditStatus === 'saving_audit';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#111827] font-sans antialiased">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#111827] font-sans antialiased w-full max-w-full overflow-x-hidden min-w-0">
       {/* Global Header */}
       <Header
         user={user}
@@ -419,7 +419,7 @@ export default function App() {
       />
 
       {/* Main Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-12 min-w-0">
         {/* VIEW 1: HOME LANDING PAGE */}
         {currentView === 'home' && (
           <div className="space-y-12 animate-fadeIn">

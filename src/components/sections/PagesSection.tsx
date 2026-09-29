@@ -82,25 +82,25 @@ export const PagesSection: React.FC<PagesSectionProps> = ({ pages, onSelectPage 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0 w-full">
       {/* Controls */}
-      <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 sm:w-72">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-neutral-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 min-w-0 w-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-72 min-w-0">
             <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="text"
               placeholder="Search crawled URLs or titles..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-neutral-50 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#FF5500]/20"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-neutral-50 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#FF5500]/20 min-w-0"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="text-xs font-semibold bg-neutral-50 px-3 py-1.5 rounded-lg border border-neutral-200 focus:outline-none cursor-pointer"
+            className="text-xs font-semibold bg-neutral-50 px-3 py-1.5 rounded-lg border border-neutral-200 focus:outline-none cursor-pointer min-w-0"
           >
             <option value="all">All Statuses ({pages.length})</option>
             <option value="200">HTTP 200 OK</option>
@@ -115,9 +115,9 @@ export const PagesSection: React.FC<PagesSectionProps> = ({ pages, onSelectPage 
       </div>
 
       {/* Pages Table */}
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden max-w-full min-w-0 w-full">
+        <div className="overflow-x-auto max-w-full min-w-0 w-full">
+          <table className="w-full text-left text-xs border-collapse min-w-[720px]">
             <thead>
               <tr className="bg-neutral-50/80 border-b border-neutral-200 text-neutral-600 font-bold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-4 cursor-pointer" onClick={() => toggleSort('url')}>
