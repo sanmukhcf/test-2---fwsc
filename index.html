@@ -4,6 +4,54 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FWSC - Free Website SEO Checker | By Lab of digiVirus</title>
+    <script>
+      // Ensure window.fetch has both a getter and setter to prevent "Cannot set property fetch of #<Window> which has only a getter"
+      (function() {
+        try {
+          var targetWindow = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : self);
+          if (!targetWindow) return;
+          var originalFetch = targetWindow.fetch;
+          var activeFetch = function() {
+            var fn = originalFetch || (typeof window !== 'undefined' ? Window.prototype.fetch : null);
+            if (typeof fn === 'function') {
+              return fn.apply(this || targetWindow, arguments);
+            }
+            throw new TypeError('fetch is not a function');
+          };
+          try {
+            Object.defineProperty(targetWindow, 'fetch', {
+              get: function() {
+                return activeFetch;
+              },
+              set: function(newFetch) {
+                if (typeof newFetch === 'function') {
+                  activeFetch = newFetch;
+                }
+              },
+              configurable: true,
+              enumerable: true
+            });
+          } catch (defErr) {
+            if (typeof Window !== 'undefined' && Window.prototype) {
+              Object.defineProperty(Window.prototype, 'fetch', {
+                get: function() {
+                  return activeFetch;
+                },
+                set: function(newFetch) {
+                  if (typeof newFetch === 'function') {
+                    activeFetch = newFetch;
+                  }
+                },
+                configurable: true,
+                enumerable: true
+              });
+            }
+          }
+        } catch (e) {
+          // Fallback if environment restricts defineProperty
+        }
+      })();
+    </script>
     <meta name="description" content="Real production-ready website SEO auditing tool with server-side crawler. By Lab of digiVirus." />
     <meta property="og:title" content="FWSC - Free Website SEO Checker | By Lab of digiVirus" />
     <meta property="og:description" content="Real production-ready website SEO auditing tool with server-side crawler. By Lab of digiVirus." />

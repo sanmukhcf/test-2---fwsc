@@ -50,11 +50,27 @@ class JobStore {
     if (!queueData) return;
 
     for (const rawUrl of urls) {
-      if (queueData.visited.size >= maxPages * 2) break;
+      if (queueData.visited.size >= maxPages * 3) break;
       const normalized = this.normalizeUrl(rawUrl);
       if (!queueData.visited.has(normalized)) {
         queueData.visited.add(normalized);
         queueData.queue.push(rawUrl);
+      }
+    }
+  }
+
+  public addPriorityUrlsToQueue(id: string, urls: string[], maxPages: number): void {
+    const queueData = this.jobQueues.get(id);
+    if (!queueData) return;
+
+    // Add priority URLs right after current index
+    for (let i = urls.length - 1; i >= 0; i--) {
+      const rawUrl = urls[i];
+      if (queueData.visited.size >= maxPages * 3) break;
+      const normalized = this.normalizeUrl(rawUrl);
+      if (!queueData.visited.has(normalized)) {
+        queueData.visited.add(normalized);
+        queueData.queue.unshift(rawUrl);
       }
     }
   }

@@ -72,6 +72,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ job, onReAudit }
     // Construct real CSV from crawled pages data
     const headers = [
       'URL',
+      'Page SEO Score',
       'HTTP Status',
       'Response Time (ms)',
       'Title',
@@ -100,6 +101,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ job, onReAudit }
 
     const rows = job.pages.map(p => [
       escapeCsv(p.url),
+      p.pageScore ?? 0,
       p.status,
       p.responseTimeMs,
       escapeCsv(p.title),

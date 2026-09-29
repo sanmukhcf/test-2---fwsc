@@ -1,8 +1,16 @@
 import express from 'express';
 import crypto from 'crypto';
 import { validateTargetUrl } from './security.js';
-import { checkReachability, crawlSinglePage, checkRobotsTxt, checkSitemapXml } from './crawler.js';
+import {
+  checkReachability,
+  crawlSinglePage,
+  checkRobotsTxt,
+  checkSitemapXml,
+  prioritizeDiscoveredUrls,
+  verifyInternalLinksSample
+} from './crawler.js';
 import { analyzeCrawlData } from './analyzer.js';
+import { extractSiteContext, analyzePageWithGemini } from './geminiSemantic.js';
 import { jobStore } from './jobStore.js';
 import { userStore } from './userStore.js';
 import { AuditJob, AuditStartRequest } from '../src/types.js';
@@ -215,8 +223,9 @@ apiRouter.post('/audit/start', async (req, res) => {
     const authUser = getAuthUser(req);
     const resolvedUserId = authUser?.id || (userId && typeof userId === 'string' ? userId : undefined);
 
-    // Automatic safe crawl limit
-    const requestedPages = maxPages && Number(maxPages) > 0 ? Math.min(25, Number(maxPages)) : 12;
+    // Internal safe crawl budget (Problem 25: server-side safety limit to prevent infinite crawling)
+    const INTERNAL_CRAWL_BUDGET = 25;
+    const requestedPages = INTERNAL_CRAWL_BUDGET;
 
     // Step 1: URL & Security & DNS Check
     const validation = await validateTargetUrl(url);
@@ -264,9 +273,12 @@ apiRouter.post('/audit/start', async (req, res) => {
       },
       pages: [],
       issues: [],
-      scoreBreakdown: { overall: 0, technical: 0, onPage: 0, content: 0, links: 0 },
+      scoreBreakdown: { overall: 0, technical: 0, onPage: 0, content: 0, links: 0, performance: 0 },
       stats: {
         totalCrawled: 0,
+        pagesAnalyzed: 0,
+        pagesFailed: 0,
+        avgPageScore: 0,
         avgResponseTimeMs: 0,
         totalImages: 0,
         totalMissingAlt: 0,
@@ -275,7 +287,9 @@ apiRouter.post('/audit/start', async (req, res) => {
         criticalIssuesCount: 0,
         warningIssuesCount: 0,
         noticeIssuesCount: 0,
-        passedChecksCount: 0
+        passedChecksCount: 0,
+        duplicateContentPagesCount: 0,
+        schemaPagesCount: 0
       },
       createdAt: Date.now()
     };
@@ -345,6 +359,12 @@ apiRouter.post('/audit/batch/:id', async (req, res) => {
         job.robotsTxt = robots;
         const sitemap = await checkSitemapXml(origin, robots.sitemapsFound);
         job.sitemapXml = sitemap;
+
+        // Automatically discover high-priority pages from sitemap (about, services, products, contact, blog)
+        if (sitemap.extractedUrls && sitemap.extractedUrls.length > 0) {
+          const prioritizedSitemap = prioritizeDiscoveredUrls(sitemap.extractedUrls, origin);
+          jobStore.addPriorityUrlsToQueue(job.id, prioritizedSitemap, job.maxPages);
+        }
       } catch (e) {
         console.warn('Robots/sitemap check warning:', e);
       }
@@ -368,13 +388,14 @@ apiRouter.post('/audit/batch/:id', async (req, res) => {
       job.pages.push(pageAudit);
       crawledInThisBatch++;
 
-      // Collect newly discovered internal links to crawl
+      // Collect newly discovered internal links to crawl, prioritized by importance
       if (pageAudit.status === 200 && pageAudit.internalLinks.length > 0) {
         const newInternalHrefs = pageAudit.internalLinks
           .map(l => l.href)
           .filter(href => !href.includes('#') && !href.includes('?'));
 
-        jobStore.addUrlsToQueue(job.id, newInternalHrefs, job.maxPages);
+        const prioritizedLinks = prioritizeDiscoveredUrls(newInternalHrefs, origin);
+        jobStore.addUrlsToQueue(job.id, prioritizedLinks, job.maxPages);
       }
     }
 
@@ -386,16 +407,66 @@ apiRouter.post('/audit/batch/:id', async (req, res) => {
     const hasReachedMax = job.pages.length >= job.maxPages;
 
     if (hasReachedMax || isQueueEmpty || job.pages.length >= job.maxPages) {
+      const crawlBudgetReached = hasReachedMax && !isQueueEmpty;
       job.status = 'analyzing';
-      job.progress.stage = 'Computing SEO audit and analyzing checks...';
+      job.progress.stage = crawlBudgetReached
+        ? 'Audit crawl budget reached. Extracting website context...'
+        : 'All discovered pages crawled. Extracting website context...';
 
-      const analysis = analyzeCrawlData(job.pages, job.robotsTxt, job.sitemapXml);
+      // 1. Determine the website's actual business topic and context first
+      let siteCtx;
+      try {
+        siteCtx = await extractSiteContext(job.pages, job.hostname);
+        job.siteContext = siteCtx;
+      } catch (e) {
+        console.warn('Site context extraction warning:', e);
+      }
+
+      // 2. Sample internal links to detect real broken 4xx/5xx targets
+      const allInternalHrefs = Array.from(
+        new Set(job.pages.flatMap(p => p.internalLinks.map(l => l.href)))
+      );
+      try {
+        const brokenSample = await verifyInternalLinksSample(allInternalHrefs, origin);
+        if (brokenSample.length > 0) {
+          for (const b of brokenSample) {
+            for (const p of job.pages) {
+              if (p.internalLinks.some(l => l.href === b.url)) {
+                p.brokenInternalLinks = p.brokenInternalLinks || [];
+                p.brokenInternalLinks.push(`${b.url} (HTTP ${b.status})`);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Broken link check warning:', e);
+      }
+
+      // 3. Run semantic and topic relevance analysis on key pages
+      // Prioritize homepage, about, services, products, contact (up to 5 key pages)
+      const keyPages = job.pages.slice(0, 5);
+      for (const page of keyPages) {
+        if (page.status === 200) {
+          try {
+            const semanticResult = await analyzePageWithGemini(page, job.siteContext?.businessTopic);
+            page.semanticFindings = semanticResult.findings;
+            page.pageTopic = job.siteContext?.businessTopic;
+          } catch (e) {
+            console.warn(`Semantic check warning on ${page.url}:`, e);
+          }
+        }
+      }
+
+      // 4. Run deterministic rule-based scoring engine
+      job.progress.stage = 'Computing ground-truth evidence-based SEO scores...';
+      const analysis = analyzeCrawlData(job.pages, job.robotsTxt, job.sitemapXml, job.siteContext);
       job.issues = analysis.issues;
       job.scoreBreakdown = analysis.scoreBreakdown;
       job.stats = analysis.stats;
+      job.stats.crawlBudgetReached = crawlBudgetReached;
       job.status = 'completed';
       job.completedAt = Date.now();
-      job.progress.stage = 'Audit completed';
+      job.progress.stage = crawlBudgetReached ? 'Audit completed (crawl budget reached)' : 'Audit completed';
 
       // Save to recent sites
       jobStore.addRecentSite({

@@ -188,7 +188,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({ job }) => {
           Indexability & Technical Signals
         </h4>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-neutral-600">Noindex Directives</span>
@@ -243,6 +243,25 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({ job }) => {
               {missingViewportPages.length > 0
                 ? 'Missing viewport meta tags on some pages.'
                 : 'Mobile-friendly viewport declared on all pages.'}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-neutral-600">Schema.org Structured Data</span>
+              {job.stats.schemaPagesCount > 0 ? (
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+              )}
+            </div>
+            <div className="text-lg font-bold text-neutral-900">
+              {job.stats.schemaPagesCount} / {pages.length} pages
+            </div>
+            <p className="text-[11px] text-neutral-500 mt-1">
+              {job.stats.schemaPagesCount > 0
+                ? 'JSON-LD schema structured data implemented.'
+                : 'Zero Schema.org structured data scripts detected.'}
             </p>
           </div>
         </div>

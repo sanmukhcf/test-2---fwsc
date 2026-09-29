@@ -10,8 +10,8 @@ interface PagesSectionProps {
 export const PagesSection: React.FC<PagesSectionProps> = ({ pages, onSelectPage }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'url' | 'time' | 'words' | 'status'>('url');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortBy, setSortBy] = useState<'url' | 'time' | 'words' | 'status' | 'score'>('score');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const filteredPages = pages
     .filter(p => {
@@ -35,16 +35,40 @@ export const PagesSection: React.FC<PagesSectionProps> = ({ pages, onSelectPage 
       else if (sortBy === 'time') comp = a.responseTimeMs - b.responseTimeMs;
       else if (sortBy === 'words') comp = a.wordCount - b.wordCount;
       else if (sortBy === 'status') comp = a.status - b.status;
+      else if (sortBy === 'score') comp = (a.pageScore ?? 0) - (b.pageScore ?? 0);
       return sortOrder === 'asc' ? comp : -comp;
     });
 
-  const toggleSort = (field: 'url' | 'time' | 'words' | 'status') => {
+  const toggleSort = (field: 'url' | 'time' | 'words' | 'status' | 'score') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(field);
-      setSortOrder('asc');
+      setSortOrder('desc');
     }
+  };
+
+  const getPageScoreBadge = (score?: number) => {
+    const val = score ?? 0;
+    if (val >= 80) {
+      return (
+        <span className="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+          {val}/100
+        </span>
+      );
+    }
+    if (val >= 60) {
+      return (
+        <span className="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+          {val}/100
+        </span>
+      );
+    }
+    return (
+      <span className="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-red-100 text-red-800 border border-red-300">
+        {val}/100
+      </span>
+    );
   };
 
   const getStatusBadge = (code: number) => {
@@ -102,6 +126,12 @@ export const PagesSection: React.FC<PagesSectionProps> = ({ pages, onSelectPage 
                     <ArrowUpDown className="w-3 h-3 text-neutral-400" />
                   </div>
                 </th>
+                <th className="py-3 px-3 cursor-pointer" onClick={() => toggleSort('score')}>
+                  <div className="flex items-center gap-1">
+                    <span>Page Score</span>
+                    <ArrowUpDown className="w-3 h-3 text-neutral-400" />
+                  </div>
+                </th>
                 <th className="py-3 px-3 cursor-pointer" onClick={() => toggleSort('status')}>
                   <div className="flex items-center gap-1">
                     <span>Status</span>
@@ -134,10 +164,17 @@ export const PagesSection: React.FC<PagesSectionProps> = ({ pages, onSelectPage 
                 >
                   {/* URL & Title */}
                   <td className="py-3.5 px-4 max-w-sm">
-                    <div className="font-bold text-neutral-900 truncate mb-0.5">
-                      {page.title || (
-                        <span className="text-red-500 italic font-normal">Missing title</span>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      {page.pageType && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-700 border border-neutral-200 shrink-0">
+                          {page.pageType}
+                        </span>
                       )}
+                      <div className="font-bold text-neutral-900 truncate">
+                        {page.title || (
+                          <span className="text-red-500 italic font-normal">Missing title</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1.5 font-mono text-[11px] text-neutral-500 truncate">
                       <span className="truncate">{page.path || '/'}</span>
@@ -150,6 +187,11 @@ export const PagesSection: React.FC<PagesSectionProps> = ({ pages, onSelectPage 
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
+                  </td>
+
+                  {/* Page Score */}
+                  <td className="py-3.5 px-3 whitespace-nowrap">
+                    {getPageScoreBadge(page.pageScore)}
                   </td>
 
                   {/* Status */}

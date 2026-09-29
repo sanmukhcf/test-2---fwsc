@@ -78,7 +78,10 @@ export interface ImageAudit {
   src: string;
   alt: string;
   hasAlt: boolean;
+  hasAltAttribute?: boolean;
+  isDecorative?: boolean;
   isExternal: boolean;
+  isGenericAlt?: boolean;
 }
 
 export interface LinkAudit {
@@ -89,17 +92,61 @@ export interface LinkAudit {
   rel?: string;
   target?: string;
   status?: number;
+  isGenericAnchor?: boolean;
 }
+
+export interface SemanticCheck {
+  check: string;
+  status: 'PASS' | 'WARNING' | 'FAIL' | 'UNKNOWN';
+  reason: string;
+  evidence: string;
+  confidence: number;
+}
+
+export interface SiteContext {
+  businessTopic: string;
+  mainServices: string[];
+  importantEntities: string[];
+  searchIntent: string;
+  topTerms: { term: string; count: number }[];
+  isAiPowered: boolean;
+}
+
+export interface PageIssueItem {
+  category: 'critical' | 'warning' | 'notice' | 'passed';
+  title: string;
+  evidence: string;
+  recommendation?: string;
+}
+
+export type PageType =
+  | 'homepage'
+  | 'about'
+  | 'service'
+  | 'product'
+  | 'category'
+  | 'contact'
+  | 'blog'
+  | 'landing'
+  | 'other';
 
 export interface PageAudit {
   url: string;
   path: string;
+  pageType?: PageType;
   status: number;
   statusText: string;
   responseTimeMs: number;
   contentType: string;
   contentLengthBytes: number;
   isHttps: boolean;
+
+  // Page Score (0-100 calculated deterministically)
+  pageScore?: number;
+  pageScoreBreakdown?: ScoreBreakdown;
+  pageTopic?: string;
+  semanticFindings?: SemanticCheck[];
+  pageIssues?: PageIssueItem[];
 
   // Title
   title: string;
@@ -117,6 +164,7 @@ export interface PageAudit {
   h1Status: 'good' | 'missing' | 'multiple';
   h2List: string[];
   h2Count: number;
+  headingHierarchyIssues?: string[];
 
   // Canonical
   canonicalUrl: string | null;
@@ -126,17 +174,24 @@ export interface PageAudit {
   wordCount: number;
   readingTimeMinutes: number;
   textToHtmlRatio: number;
+  bodySnippet?: string;
+  normalizedContent?: string;
+  isDuplicateContent?: boolean;
+  duplicateWithUrl?: string;
+  duplicateSimilarity?: number;
 
   // Images
   images: ImageAudit[];
   totalImages: number;
   missingAltCount: number;
+  genericAltCount?: number;
 
   // Links
   internalLinks: LinkAudit[];
   externalLinks: LinkAudit[];
   internalLinkCount: number;
   externalLinkCount: number;
+  brokenInternalLinks?: string[];
 
   // Directives
   metaRobots: string | null;
@@ -150,12 +205,16 @@ export interface PageAudit {
   ogImage?: string;
   twitterCard?: string;
 
-  // Technical
+  // Technical & Schema
   hasViewport: boolean;
   charset: string | null;
   hasHsts: boolean;
   hasFavicon: boolean;
   lang: string | null;
+  schemaOrg?: {
+    hasSchema: boolean;
+    types: string[];
+  };
 }
 
 export interface RobotsTxtAudit {
@@ -174,6 +233,7 @@ export interface SitemapXmlAudit {
   url: string;
   urlCount: number;
   urlsSample: string[];
+  extractedUrls?: string[];
   isXml: boolean;
 }
 
@@ -188,8 +248,10 @@ export interface AuditIssue {
   title: string;
   description: string;
   recommendation: string;
+  evidence?: string;
   impactedPages: IssueImpactedPage[];
   impactScore?: number;
+  checkType?: string;
 }
 
 export interface AuditStartRequest {
@@ -205,6 +267,7 @@ export interface ScoreBreakdown {
   onPage: number;
   content: number;
   links: number;
+  performance: number;
 }
 
 export interface AuditJob {
@@ -232,11 +295,22 @@ export interface AuditJob {
   robotsTxt?: RobotsTxtAudit;
   sitemapXml?: SitemapXmlAudit;
 
+  siteContext?: SiteContext;
   issues: AuditIssue[];
   scoreBreakdown: ScoreBreakdown;
 
   stats: {
     totalCrawled: number;
+    totalDiscovered?: number;
+    pagesAnalyzed: number;
+    pagesFailed: number;
+    pagesSkipped?: number;
+    totalChecks?: number;
+    totalPasses?: number;
+    totalWarnings?: number;
+    totalFailures?: number;
+    totalUnknowns?: number;
+    avgPageScore: number;
     avgResponseTimeMs: number;
     totalImages: number;
     totalMissingAlt: number;
@@ -246,6 +320,9 @@ export interface AuditJob {
     warningIssuesCount: number;
     noticeIssuesCount: number;
     passedChecksCount: number;
+    duplicateContentPagesCount: number;
+    schemaPagesCount: number;
+    crawlBudgetReached?: boolean;
   };
 
   createdAt: number;

@@ -11,7 +11,10 @@ import {
   AlertTriangle,
   XCircle,
   Clock,
-  Share2
+  Share2,
+  Layers,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 
 interface PageDetailModalProps {
@@ -22,15 +25,33 @@ interface PageDetailModalProps {
 export const PageDetailModal: React.FC<PageDetailModalProps> = ({ page, onClose }) => {
   if (!page) return null;
 
+  const score = page.pageScore ?? (page.status === 200 ? 70 : 0);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl border border-neutral-200 flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="p-5 border-b border-neutral-200 flex items-start justify-between gap-3 bg-neutral-50/80">
           <div className="truncate">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800">
                 HTTP {page.status}
+              </span>
+              {page.pageType && (
+                <span className="px-2 py-0.5 rounded-md text-xs font-extrabold uppercase tracking-wider bg-neutral-200 text-neutral-800">
+                  {page.pageType} page
+                </span>
+              )}
+              <span
+                className={`px-2 py-0.5 rounded-md text-xs font-extrabold border ${
+                  score >= 80
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : score >= 60
+                    ? 'bg-amber-50 text-amber-800 border-amber-300'
+                    : 'bg-red-50 text-red-800 border-red-300'
+                }`}
+              >
+                Page Score: {score}/100
               </span>
               <span className="text-xs font-mono text-neutral-500">
                 {page.responseTimeMs}ms response
@@ -64,6 +85,83 @@ export const PageDetailModal: React.FC<PageDetailModalProps> = ({ page, onClose 
 
         {/* Modal Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-6 text-xs text-neutral-700">
+          {/* Section: Semantic Relevance & AI Quality Findings */}
+          {page.semanticFindings && page.semanticFindings.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#FF5500]" />
+                  Semantic Relevance & Content Quality Evidence
+                </h4>
+                <span className="text-[10px] font-bold text-neutral-400">
+                  Topic: {page.pageTopic || 'Page Analysis'}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {page.semanticFindings.map((finding, idx) => {
+                  const isPass = finding.status === 'PASS';
+                  const isWarn = finding.status === 'WARNING';
+                  const isFail = finding.status === 'FAIL';
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-xl border ${
+                        isPass
+                          ? 'bg-emerald-50/50 border-emerald-200'
+                          : isWarn
+                          ? 'bg-amber-50/50 border-amber-200'
+                          : isFail
+                          ? 'bg-red-50/50 border-red-200'
+                          : 'bg-neutral-50 border-neutral-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="font-bold text-neutral-900 text-xs">
+                          {finding.check}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                            isPass
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : isWarn
+                              ? 'bg-amber-100 text-amber-800'
+                              : isFail
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-neutral-200 text-neutral-700'
+                          }`}
+                        >
+                          {finding.status}
+                        </span>
+                      </div>
+                      <p className="text-neutral-700 mb-1">{finding.reason}</p>
+                      <p className="font-mono text-[11px] text-neutral-600 bg-white/70 p-1.5 rounded border border-neutral-200/50">
+                        Evidence: {finding.evidence}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Duplicate Content Notice if detected */}
+          {page.isDuplicateContent && (
+            <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-amber-900 block text-xs">
+                  Internal Duplicate Content Detected ({page.duplicateSimilarity}% match)
+                </span>
+                <p className="text-amber-800 text-xs mt-0.5">
+                  Shares {page.duplicateSimilarity}% similar body content with{' '}
+                  <span className="font-mono font-semibold">{page.duplicateWithUrl}</span>.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Section: Title & Meta Description */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400">
@@ -124,6 +222,13 @@ export const PageDetailModal: React.FC<PageDetailModalProps> = ({ page, onClose 
               )}
             </div>
 
+            {/* Heading Hierarchy Issues */}
+            {page.headingHierarchyIssues && page.headingHierarchyIssues.length > 0 && (
+              <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 font-medium">
+                {page.headingHierarchyIssues.join(' ')}
+              </div>
+            )}
+
             {/* H2 */}
             {page.h2List.length > 0 && (
               <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200">
@@ -141,12 +246,12 @@ export const PageDetailModal: React.FC<PageDetailModalProps> = ({ page, onClose 
             )}
           </div>
 
-          {/* Section: Canonical & Technical */}
+          {/* Section: Canonical & Schema.org */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-              Canonical & Indexability
+              Canonical & Structured Data (Schema.org)
             </h4>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200">
                 <span className="text-neutral-400 block">Canonical URL:</span>
                 <span className="font-mono font-medium text-neutral-800 truncate block">
@@ -154,9 +259,11 @@ export const PageDetailModal: React.FC<PageDetailModalProps> = ({ page, onClose 
                 </span>
               </div>
               <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200">
-                <span className="text-neutral-400 block">Meta Robots:</span>
-                <span className="font-mono font-medium text-neutral-800">
-                  {page.metaRobots || 'index, follow (default)'}
+                <span className="text-neutral-400 block">Schema.org Structured Data:</span>
+                <span className="font-mono font-medium text-neutral-800 block truncate">
+                  {page.schemaOrg?.hasSchema
+                    ? `Active (${page.schemaOrg.types.join(', ')})`
+                    : 'None detected'}
                 </span>
               </div>
             </div>

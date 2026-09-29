@@ -216,6 +216,17 @@ export const IssuesSection: React.FC<IssuesSectionProps> = ({ issues }) => {
                       </p>
                     </div>
 
+                    {issue.evidence && (
+                      <div className="p-3 bg-neutral-100/80 rounded-xl border border-neutral-200">
+                        <h5 className="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                          Audited Ground-Truth Evidence:
+                        </h5>
+                        <p className="text-xs sm:text-sm font-mono text-neutral-800">
+                          {issue.evidence}
+                        </p>
+                      </div>
+                    )}
+
                     <div className="p-3 bg-white rounded-xl border border-neutral-200">
                       <h5 className="text-xs font-bold uppercase tracking-wider text-[#FF5500] mb-1">
                         How to Resolve:

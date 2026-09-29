@@ -24,8 +24,9 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
   const getScoreMeta = (val: number) => {
     if (val >= 90) return { label: 'Excellent', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-300' };
     if (val >= 75) return { label: 'Good', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' };
-    if (val >= 50) return { label: 'Needs Improvement', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' };
-    return { label: 'Poor SEO Health', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-300' };
+    if (val >= 60) return { label: 'Needs Improvement', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' };
+    if (val >= 40) return { label: 'Poor', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' };
+    return { label: 'Critical', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-300' };
   };
 
   const scoreMeta = getScoreMeta(score);
@@ -96,15 +97,15 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
         {/* Crawl Summary & Category Breakdown */}
         <div className="lg:col-span-8 space-y-6">
           {/* Sub-Category Scores */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+            <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs">
               <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider">Technical</span>
-                <Server className="w-4 h-4 text-[#FF5500]" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Technical</span>
+                <Server className="w-3.5 h-3.5 text-[#FF5500]" />
               </div>
-              <div className="text-2xl font-black text-neutral-900">
+              <div className="text-xl font-black text-neutral-900">
                 {job.scoreBreakdown.technical}
-                <span className="text-xs text-neutral-400 font-normal">/100</span>
+                <span className="text-[10px] text-neutral-400 font-normal">/100</span>
               </div>
               <div className="w-full bg-neutral-100 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
@@ -114,14 +115,14 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
+            <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs">
               <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider">On-Page</span>
-                <FileCode className="w-4 h-4 text-[#FF5500]" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">On-Page</span>
+                <FileCode className="w-3.5 h-3.5 text-[#FF5500]" />
               </div>
-              <div className="text-2xl font-black text-neutral-900">
+              <div className="text-xl font-black text-neutral-900">
                 {job.scoreBreakdown.onPage}
-                <span className="text-xs text-neutral-400 font-normal">/100</span>
+                <span className="text-[10px] text-neutral-400 font-normal">/100</span>
               </div>
               <div className="w-full bg-neutral-100 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
@@ -131,14 +132,14 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
+            <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs">
               <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider">Content</span>
-                <Layers className="w-4 h-4 text-[#FF5500]" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Content</span>
+                <Layers className="w-3.5 h-3.5 text-[#FF5500]" />
               </div>
-              <div className="text-2xl font-black text-neutral-900">
+              <div className="text-xl font-black text-neutral-900">
                 {job.scoreBreakdown.content}
-                <span className="text-xs text-neutral-400 font-normal">/100</span>
+                <span className="text-[10px] text-neutral-400 font-normal">/100</span>
               </div>
               <div className="w-full bg-neutral-100 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
@@ -148,19 +149,36 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
+            <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs">
               <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider">Links</span>
-                <Link2 className="w-4 h-4 text-[#FF5500]" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Links</span>
+                <Link2 className="w-3.5 h-3.5 text-[#FF5500]" />
               </div>
-              <div className="text-2xl font-black text-neutral-900">
+              <div className="text-xl font-black text-neutral-900">
                 {job.scoreBreakdown.links}
-                <span className="text-xs text-neutral-400 font-normal">/100</span>
+                <span className="text-[10px] text-neutral-400 font-normal">/100</span>
               </div>
               <div className="w-full bg-neutral-100 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
                   className="bg-[#FF5500] h-full rounded-full"
                   style={{ width: `${job.scoreBreakdown.links}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider">UX / Speed</span>
+                <Server className="w-3.5 h-3.5 text-blue-500" />
+              </div>
+              <div className="text-xl font-black text-neutral-900">
+                {job.scoreBreakdown.performance}
+                <span className="text-[10px] text-neutral-400 font-normal">/100</span>
+              </div>
+              <div className="w-full bg-neutral-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div
+                  className="bg-blue-500 h-full rounded-full"
+                  style={{ width: `${job.scoreBreakdown.performance}%` }}
                 />
               </div>
             </div>
@@ -234,9 +252,18 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
               </span>
             </div>
             <div>
-              <span className="text-neutral-400 block font-medium">Pages Crawled:</span>
+              <span className="text-neutral-400 block font-medium">Pages Analyzed:</span>
               <span className="font-bold text-neutral-900">
-                {job.pages.length} / {job.maxPages} Requested
+                {job.stats.pagesAnalyzed} page{job.stats.pagesAnalyzed === 1 ? '' : 's'}
+                {job.stats.crawlBudgetReached ? (
+                  <span className="text-[10px] text-amber-600 font-semibold block">
+                    Crawl budget reached ({job.pages.length} crawled)
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-neutral-400 block font-normal">
+                    {job.pages.length} crawled
+                  </span>
+                )}
               </span>
             </div>
             <div>
@@ -255,6 +282,60 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
         </div>
       </div>
 
+      {/* Discovered Website Context & Semantic Topic Card */}
+      {job.siteContext && (
+        <div className="bg-white rounded-2xl p-5 border border-neutral-200 shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-orange-50 text-[#FF5500]">
+                <Layers className="w-4 h-4" />
+              </span>
+              <div>
+                <h4 className="text-sm font-bold text-neutral-900">
+                  Discovered Website Business Context & Topic Focus
+                </h4>
+                <p className="text-[11px] text-neutral-500">
+                  Extracted from actual visible body text, headings, and document structure
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-700">
+              {job.siteContext.isAiPowered ? 'AI Semantic Analysis' : 'Evidence-Based Semantic Extraction'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+              <span className="text-neutral-400 block font-medium mb-0.5">Primary Subject / Industry:</span>
+              <span className="font-bold text-neutral-900 text-sm block">
+                {job.siteContext.businessTopic}
+              </span>
+            </div>
+
+            <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+              <span className="text-neutral-400 block font-medium mb-0.5">Main Offerings / Key Services:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {job.siteContext.mainServices.slice(0, 4).map((s, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 rounded-md bg-white border border-neutral-200 font-semibold text-neutral-700 text-[11px]"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+              <span className="text-neutral-400 block font-medium mb-0.5">Search Intent Target:</span>
+              <span className="font-semibold text-neutral-800 block">
+                {job.siteContext.searchIntent}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Priority Issues to Address */}
       <div className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-xs">
         <div className="flex items-center justify-between mb-4">
@@ -263,7 +344,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
               Top Actionable SEO Recommendations
             </h3>
             <p className="text-xs text-neutral-500">
-              Highest impact issues identified during the real site crawl
+              Highest impact issues identified during the real site crawl with exact evidence
             </p>
           </div>
           <button
@@ -310,6 +391,11 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ job, onNavigat
                   <p className="text-xs text-neutral-500 line-clamp-1">
                     {issue.description}
                   </p>
+                  {issue.evidence && (
+                    <p className="text-xs text-neutral-700 bg-neutral-50 px-2 py-1 rounded font-mono text-[11px] border border-neutral-200/60 inline-block">
+                      Evidence: {issue.evidence}
+                    </p>
+                  )}
                   <p className="text-xs text-neutral-700 font-medium pt-0.5">
                     Fix: {issue.recommendation}
                   </p>

@@ -3,6 +3,7 @@ import {
   ImageAudit,
   LinkAudit,
   PageAudit,
+  PageType,
   ReachabilityCheck,
   RedirectHop,
   RobotsTxtAudit,
@@ -201,6 +202,102 @@ export async function checkReachability(initialUrl: string): Promise<Reachabilit
   };
 }
 
+const GENERIC_ALT_TERMS = new Set([
+  'image', 'img', 'photo', 'picture', 'pic', 'logo', 'icon', 'graphic',
+  'banner', 'untitled', 'default', 'placeholder', 'avatar', 'thumbnail'
+]);
+
+const GENERIC_ANCHOR_TERMS = new Set([
+  'click here', 'click', 'here', 'read more', 'learn more', 'more',
+  'link', 'this link', 'view more', 'view', 'details', 'check this', 'go'
+]);
+
+export function prioritizeDiscoveredUrls(urls: string[], rootOrigin: string): string[] {
+  const scoreUrl = (uStr: string): number => {
+    try {
+      const u = new URL(uStr, rootOrigin);
+      const p = u.pathname.toLowerCase();
+      if (p === '/' || p === '') return 100;
+      if (p.includes('about') || p.includes('company') || p.includes('who-we-are')) return 90;
+      if (p.includes('service') || p.includes('product') || p.includes('solution') || p.includes('pricing') || p.includes('feature')) return 85;
+      if (p.includes('contact') || p.includes('support')) return 80;
+      if (p.includes('blog') || p.includes('article') || p.includes('news')) return 75;
+      // Penalize pagination, tags, search queries
+      if (p.includes('/page/') || p.includes('/tag/') || p.includes('/category/') || u.search.length > 0) return 20;
+      return 50;
+    } catch {
+      return 10;
+    }
+  };
+
+  return [...urls].sort((a, b) => scoreUrl(b) - scoreUrl(a));
+}
+
+export function detectPageType(
+  _url: string,
+  pathname: string,
+  title: string,
+  h1List: string[],
+  _bodySnippet: string = '',
+  schemaTypes: string[] = []
+): PageType {
+  const cleanPath = (pathname || '').toLowerCase();
+  const titleLow = (title || '').toLowerCase();
+  const h1sLow = (h1List || []).join(' ').toLowerCase();
+
+  // 1. Homepage
+  if (cleanPath === '/' || cleanPath === '' || cleanPath === '/index.html' || cleanPath === '/home') {
+    return 'homepage';
+  }
+  // 2. Contact page
+  if (
+    /contact|reach-us|get-in-touch|support|help-center|location/i.test(cleanPath) ||
+    /contact us|get in touch|reach us/i.test(titleLow) ||
+    /contact/i.test(h1sLow)
+  ) {
+    return 'contact';
+  }
+  // 3. About page
+  if (
+    /about|who-we-are|our-story|our-team|leadership|history|company/i.test(cleanPath) ||
+    /about us|who we are|our story/i.test(titleLow)
+  ) {
+    return 'about';
+  }
+  // 4. Service / Solution page
+  if (
+    /service|services|solution|solutions|capabilities|what-we-do/i.test(cleanPath) ||
+    /our services|our solutions/i.test(titleLow) ||
+    /services|solutions/i.test(h1sLow)
+  ) {
+    return 'service';
+  }
+  // 5. Product / Pricing page
+  if (
+    /product|products|item|items|pricing|plans|shop|store|catalog/i.test(cleanPath) ||
+    schemaTypes.some(t => /product|offer/i.test(t))
+  ) {
+    return 'product';
+  }
+  // 6. Category / Collection page
+  if (/category|categories|collection|collections/i.test(cleanPath)) {
+    return 'category';
+  }
+  // 7. Blog / Article page
+  if (
+    /blog|post|posts|articles|news|insights|guide|journal/i.test(cleanPath) ||
+    schemaTypes.some(t => /article|blogposting|newsarticle/i.test(t))
+  ) {
+    return 'blog';
+  }
+  // 8. Landing page
+  if (/landing|lp|features|overview|campaign/i.test(cleanPath)) {
+    return 'landing';
+  }
+
+  return 'other';
+}
+
 export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Promise<PageAudit> {
   const startTime = Date.now();
   const controller = new AbortController();
@@ -286,6 +383,7 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
       images: [],
       totalImages: 0,
       missingAltCount: 0,
+      genericAltCount: 0,
       internalLinks: [],
       externalLinks: [],
       internalLinkCount: 0,
@@ -298,7 +396,9 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
       charset: null,
       hasHsts,
       hasFavicon: false,
-      lang: null
+      lang: null,
+      schemaOrg: { hasSchema: false, types: [] },
+      pageScore: 0
     };
   }
 
@@ -326,16 +426,34 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
   else if (descriptionLength > 160) descriptionStatus = 'too_long';
 
   // Headings
+  const headingHierarchyIssues: string[] = [];
   const h1Els = root.querySelectorAll('h1');
   const h1List = h1Els.map(el => (el.text || '').trim().replace(/\s+/g, ' ')).filter(Boolean);
   const h1Count = h1List.length;
   let h1Status: 'good' | 'missing' | 'multiple' = 'good';
-  if (h1Count === 0) h1Status = 'missing';
-  else if (h1Count > 1) h1Status = 'multiple';
+  if (h1Count === 0) {
+    h1Status = 'missing';
+    headingHierarchyIssues.push('Missing <h1> heading tag on page.');
+  } else if (h1Count > 1) {
+    h1Status = 'multiple';
+    headingHierarchyIssues.push(`Found ${h1Count} multiple <h1> headings on single page.`);
+  }
+
+  // Check for empty H1 elements
+  for (const h of h1Els) {
+    if (!(h.text || '').trim()) {
+      headingHierarchyIssues.push('Empty <h1> tag with zero text found.');
+    }
+  }
 
   const h2Els = root.querySelectorAll('h2');
   const h2List = h2Els.map(el => (el.text || '').trim().replace(/\s+/g, ' ')).filter(Boolean).slice(0, 15);
   const h2Count = h2Els.length;
+
+  const h3Els = root.querySelectorAll('h3');
+  if (h3Els.length > 0 && h2Count === 0) {
+    headingHierarchyIssues.push('Page uses <h3> tags without any preceding <h2> headings (skipped hierarchy).');
+  }
 
   // Canonical
   const canonicalEl = root.querySelector('link[rel="canonical" i]');
@@ -383,32 +501,102 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
   const ogImage = root.querySelector('meta[property="og:image" i]')?.getAttribute('content') || undefined;
   const twitterCard = root.querySelector('meta[name="twitter:card" i]')?.getAttribute('content') || undefined;
 
+  // Schema.org / Structured Data JSON-LD & Microdata extraction
+  const schemaTypes: Set<string> = new Set();
+  const ldJsonScripts = root.querySelectorAll('script[type="application/ld+json"]');
+  for (const s of ldJsonScripts) {
+    try {
+      const jsonContent = JSON.parse(s.text || '{}');
+      const extractType = (obj: any) => {
+        if (!obj || typeof obj !== 'object') return;
+        if (obj['@type']) {
+          if (Array.isArray(obj['@type'])) {
+            obj['@type'].forEach((t: string) => schemaTypes.add(String(t)));
+          } else {
+            schemaTypes.add(String(obj['@type']));
+          }
+        }
+        if (Array.isArray(obj['@graph'])) {
+          obj['@graph'].forEach((item: any) => extractType(item));
+        }
+      };
+      if (Array.isArray(jsonContent)) {
+        jsonContent.forEach(item => extractType(item));
+      } else {
+        extractType(jsonContent);
+      }
+    } catch {}
+  }
+
+  // Microdata check
+  const microdataEls = root.querySelectorAll('[itemtype]');
+  for (const m of microdataEls) {
+    const itemType = m.getAttribute('itemtype') || '';
+    const typeName = itemType.split('/').pop();
+    if (typeName) schemaTypes.add(typeName);
+  }
+
+  const schemaOrg = {
+    hasSchema: schemaTypes.size > 0,
+    types: Array.from(schemaTypes)
+  };
+
   // Body content word count & text ratio
-  // Clone root or clean body tags
   const bodyEl = root.querySelector('body');
   let bodyText = '';
+  let normalizedContent = '';
   if (bodyEl) {
-    // Remove scripts, styles, svg
-    const scripts = bodyEl.querySelectorAll('script, style, noscript, svg');
-    scripts.forEach(s => s.remove());
+    // Remove scripts, styles, svg, noscript
+    const junk = bodyEl.querySelectorAll('script, style, noscript, svg, iframe');
+    junk.forEach(s => s.remove());
     bodyText = bodyEl.text.replace(/\s+/g, ' ').trim();
+
+    // For normalized content (used for duplicate detection and content originality),
+    // also clone and strip boilerplate elements (nav, footer, header, cookie notices)
+    try {
+      const clonedRoot = parse(bodyEl.innerHTML);
+      const boilerplate = clonedRoot.querySelectorAll(
+        'nav, footer, header, [role="navigation"], [role="banner"], [role="contentinfo"], .nav, .navbar, .footer, .menu, .cookie, .cookie-banner, .cookie-consent, #cookie-consent'
+      );
+      boilerplate.forEach(b => b.remove());
+      normalizedContent = clonedRoot.text.replace(/\s+/g, ' ').trim();
+    } catch {
+      normalizedContent = bodyText;
+    }
   }
 
   const words = bodyText.split(/\s+/).filter(w => w.length > 1);
   const wordCount = words.length;
   const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
   const textToHtmlRatio = html.length > 0 ? Math.round((bodyText.length / html.length) * 100) : 0;
+  const bodySnippet = bodyText.slice(0, 1000);
 
   // Images
   const imgEls = root.querySelectorAll('img');
   const images: ImageAudit[] = [];
   let missingAltCount = 0;
+  let genericAltCount = 0;
 
   for (const img of imgEls) {
     const src = img.getAttribute('src') || '';
-    const alt = (img.getAttribute('alt') || '').trim();
-    const hasAlt = img.hasAttribute('alt') && alt.length > 0;
-    if (!hasAlt) missingAltCount++;
+    const hasAltAttribute = img.hasAttribute('alt');
+    const rawAlt = img.getAttribute('alt') || '';
+    const alt = rawAlt.trim();
+    const isDecorative = hasAltAttribute && alt.length === 0;
+    const hasAlt = hasAltAttribute && alt.length > 0;
+    let isGenericAlt = false;
+
+    // WCAG & HTML5: An image with alt="" is explicitly marked decorative, which is valid and NOT missing alt!
+    // An image is only missing alt if the alt attribute is completely absent.
+    if (!hasAltAttribute) {
+      missingAltCount++;
+    } else if (hasAlt) {
+      const lowerAlt = alt.toLowerCase();
+      if (GENERIC_ALT_TERMS.has(lowerAlt)) {
+        isGenericAlt = true;
+        genericAltCount++;
+      }
+    }
 
     let fullSrc = src;
     let isExternal = false;
@@ -423,7 +611,10 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
         src: fullSrc,
         alt,
         hasAlt,
-        isExternal
+        hasAltAttribute,
+        isDecorative,
+        isExternal,
+        isGenericAlt
       });
     }
   }
@@ -449,6 +640,7 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
     const text = (a.text || '').trim().replace(/\s+/g, ' ').slice(0, 80);
     const rel = a.getAttribute('rel') || undefined;
     const target = a.getAttribute('target') || undefined;
+    const isGenericAnchor = GENERIC_ANCHOR_TERMS.has(text.toLowerCase()) || text.length === 0;
 
     try {
       const fullUrl = new URL(rawHref, finalUrl);
@@ -468,7 +660,8 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
             isInternal: true,
             isAnchor: rawHref.includes('#'),
             rel,
-            target
+            target,
+            isGenericAnchor
           });
         }
       } else {
@@ -479,15 +672,27 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
           isInternal: false,
           isAnchor: false,
           rel,
-          target
+          target,
+          isGenericAnchor
         });
       }
     } catch {}
   }
 
+  // Detect Page Type from path, title, headings, and schema
+  const detectedPageType = detectPageType(
+    finalUrl,
+    path,
+    title,
+    h1List,
+    bodySnippet,
+    schemaOrg.types
+  );
+
   return {
     url: finalUrl,
     path,
+    pageType: detectedPageType,
     status,
     statusText,
     responseTimeMs,
@@ -505,14 +710,18 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
     h1Status,
     h2List,
     h2Count,
+    headingHierarchyIssues,
     canonicalUrl,
     canonicalStatus,
     wordCount,
     readingTimeMinutes,
     textToHtmlRatio,
+    bodySnippet,
+    normalizedContent,
     images: images.slice(0, 30),
     totalImages: imgEls.length,
     missingAltCount,
+    genericAltCount,
     internalLinks: internalLinks.slice(0, 50),
     externalLinks: externalLinks.slice(0, 30),
     internalLinkCount: internalLinks.length,
@@ -529,7 +738,9 @@ export async function crawlSinglePage(pageUrl: string, rootOrigin: string): Prom
     charset,
     hasHsts,
     hasFavicon,
-    lang
+    lang,
+    schemaOrg,
+    pageScore: 0
   };
 }
 
@@ -623,9 +834,11 @@ export async function checkSitemapXml(origin: string, declaredSitemaps: string[]
         if (isXml) {
           // Extract URLs using regex to avoid heavy xml parsers
           const locMatches = text.match(/<loc>(.*?)<\/loc>/gi) || [];
-          const urlsSample = locMatches
-            .slice(0, 10)
-            .map(m => m.replace(/<\/?loc>/gi, '').trim());
+          const allExtracted = locMatches
+            .map(m => m.replace(/<\/?loc>/gi, '').trim())
+            .filter(u => u.startsWith('http'));
+
+          const urlsSample = allExtracted.slice(0, 10);
 
           return {
             exists: true,
@@ -633,6 +846,7 @@ export async function checkSitemapXml(origin: string, declaredSitemaps: string[]
             url: sitemapUrl,
             urlCount: locMatches.length,
             urlsSample,
+            extractedUrls: allExtracted.slice(0, 50),
             isXml: true
           };
         }
@@ -648,6 +862,50 @@ export async function checkSitemapXml(origin: string, declaredSitemaps: string[]
     url: `${origin}/sitemap.xml`,
     urlCount: 0,
     urlsSample: [],
+    extractedUrls: [],
     isXml: false
   };
+}
+
+/**
+ * Checks a sample of internal links to detect real broken 4xx/5xx targets
+ */
+export async function verifyInternalLinksSample(
+  links: string[],
+  origin: string
+): Promise<{ url: string; status: number }[]> {
+  const broken: { url: string; status: number }[] = [];
+  const testSet = Array.from(new Set(links))
+    .filter(u => {
+      try {
+        const parsed = new URL(u);
+        return parsed.origin === origin && !u.includes('#') && !u.includes('?');
+      } catch {
+        return false;
+      }
+    })
+    .slice(0, 12);
+
+  for (const targetUrl of testSet) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'HEAD',
+        headers: { 'User-Agent': USER_AGENT },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (res.status >= 400) {
+        broken.push({ url: targetUrl, status: res.status });
+      }
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name !== 'AbortError') {
+        broken.push({ url: targetUrl, status: 520 });
+      }
+    }
+  }
+
+  return broken;
 }

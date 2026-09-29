@@ -6,7 +6,9 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  ExternalLink
+  ExternalLink,
+  Layers,
+  Copy
 } from 'lucide-react';
 
 interface ContentSectionProps {
@@ -24,6 +26,9 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ job }) => {
   const missingAlt = job.stats.totalMissingAlt;
   const altCoverage = totalImages > 0 ? Math.round(((totalImages - missingAlt) / totalImages) * 100) : 100;
 
+  // Duplicate content pages
+  const duplicatePages = pages.filter(p => p.isDuplicateContent);
+
   // Collect samples of images missing alt
   const missingAltSamples: { pageUrl: string; src: string }[] = [];
   for (const page of pages) {
@@ -36,6 +41,42 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ job }) => {
 
   return (
     <div className="space-y-6">
+      {/* Discovered Topic & Semantic Context Banner */}
+      {job.siteContext && (
+        <div className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+            <h4 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#FF5500]" />
+              Website Semantic Topic & Business Context
+            </h4>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-700">
+              {job.siteContext.isAiPowered ? 'AI Verified' : 'Real Content Extraction'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/70">
+              <span className="text-neutral-400 block font-medium">Business / Subject:</span>
+              <span className="font-bold text-neutral-900 text-sm mt-0.5 block">
+                {job.siteContext.businessTopic}
+              </span>
+            </div>
+            <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/70">
+              <span className="text-neutral-400 block font-medium">Search Intent:</span>
+              <span className="font-medium text-neutral-800 mt-0.5 block">
+                {job.siteContext.searchIntent}
+              </span>
+            </div>
+            <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/70">
+              <span className="text-neutral-400 block font-medium">Key Topic Entities:</span>
+              <span className="font-medium text-neutral-800 mt-0.5 block truncate">
+                {job.siteContext.importantEntities.join(', ') || 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content Top Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Average Word Count */}
@@ -96,6 +137,45 @@ export const ContentSection: React.FC<ContentSectionProps> = ({ job }) => {
           </div>
         </div>
       </div>
+
+      {/* Internal Duplicate Content Detection */}
+      {duplicatePages.length > 0 && (
+        <div className="bg-white rounded-2xl p-5 border border-amber-200 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+              <Copy className="w-4 h-4 text-amber-600" />
+              Internal Duplicate Content Detected ({duplicatePages.length} pages affected)
+            </h4>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
+              &gt;= 70% Similarity
+            </span>
+          </div>
+          <p className="text-xs text-neutral-500">
+            Pages sharing duplicate text within your own site cannibalize rankings.
+          </p>
+          <div className="space-y-2">
+            {duplicatePages.map((dp, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+              >
+                <div className="truncate max-w-md">
+                  <span className="font-bold text-neutral-900 block truncate">{dp.title || dp.url}</span>
+                  <span className="font-mono text-neutral-500 truncate block">{dp.url}</span>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="font-black text-amber-900">
+                    {dp.duplicateSimilarity}% match
+                  </span>
+                  <span className="text-neutral-500 block text-[10px] truncate max-w-xs font-mono">
+                    with {dp.duplicateWithUrl}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Thin Content Pages Breakdown */}
       {thinPages.length > 0 && (
